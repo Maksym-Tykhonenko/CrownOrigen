@@ -1,5 +1,6 @@
-import React from 'react';
-import {Icon, PaperProvider, Text} from 'react-native-paper';
+import React, {useState, useEffect, useRef} from 'react';
+import {StyleSheet, Image, Animated, View, Text, Alert} from 'react-native';
+import {Icon, PaperProvider} from 'react-native-paper';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {Home} from './src/screens/home';
@@ -119,16 +120,86 @@ export const TabNavigation = () => {
 };
 
 export const App = () => {
+  ///////// Louder
+  const [louderIsEnded, setLouderIsEnded] = useState(false);
+  const appearingAnim = useRef(new Animated.Value(0)).current;
+  const appearingSecondAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(appearingAnim, {
+      toValue: 1,
+      duration: 3500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.timing(appearingSecondAnim, {
+        toValue: 1,
+        duration: 7500,
+        useNativeDriver: true,
+      }).start();
+      //setLouderIsEnded(true);
+    }, 500);
+  }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setLouderIsEnded(true);
+    }, 8000);
+  }, []);
   return (
     <NavigationContainer>
       <PaperProvider>
-        <Stack.Navigator screenOptions={{headerShown: false}}>
-          <Stack.Screen name="TabNavigation" component={TabNavigation} />
-          <Stack.Screen name="Info" component={Info} />
-          <Stack.Screen name="CreateCard" component={CreateCard} />
-          <Stack.Screen name="Statistics" component={Statistics} />
-          <Stack.Screen name="Support" component={Support} />
-        </Stack.Navigator>
+        {!louderIsEnded ? (
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: '#000',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Animated.Text
+              style={{
+                textAlign: 'center',
+                color: 'gold',
+                fontSize: 60,
+                fontWeight: 'bold',
+                opacity: appearingSecondAnim,
+                shadowColor: 'gold',
+                shadowRadius: 10,
+                shadowOffset: {width: 0, height: 5},
+                shadowOpacity: 0.8,
+                elevation: 5,
+              }}>
+              Personal Crown Game Collection
+            </Animated.Text>
+            <Animated.Text
+              style={{
+                textAlign: 'center',
+                color: 'gold',
+                fontSize: 60,
+                fontWeight: 'bold',
+                opacity: appearingSecondAnim,
+                shadowColor: 'gold',
+                shadowRadius: 10,
+                shadowOffset: {width: 0, height: 5},
+                shadowOpacity: 0.8,
+                elevation: 5,
+              }}>
+              !!!
+            </Animated.Text>
+          </View>
+        ) : (
+          <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen name="TabNavigation" component={TabNavigation} />
+            <Stack.Screen name="Info" component={Info} />
+            <Stack.Screen name="CreateCard" component={CreateCard} />
+            <Stack.Screen name="Statistics" component={Statistics} />
+            <Stack.Screen name="Support" component={Support} />
+          </Stack.Navigator>
+        )}
       </PaperProvider>
     </NavigationContainer>
   );
