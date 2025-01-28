@@ -4,6 +4,7 @@ import React from 'react';
 import {FlatList, Image, Pressable, View} from 'react-native';
 
 import {Appbar, Icon, List, Text, useTheme} from 'react-native-paper';
+import {GameCard} from './gameCard';
 
 export const list = [
   {
@@ -218,51 +219,12 @@ export const Home = () => {
           data={listGames}
           showsVerticalScrollIndicator={false}
           style={{marginHorizontal: 20}}
-          renderItem={({item, index}: any) => {
-            return (
-              <Pressable
-                key={index}
-                onPress={() => navigation.navigate('Info', {id: index})}
-                style={{
-                  position: 'relative',
-                  borderRadius: 30,
-                  marginBottom: 20,
-                }}>
-                <Image
-                  style={{
-                    width: '100%',
-                    height: 300,
-                    objectFit: 'cover',
-                    borderRadius: 30,
-                  }}
-                  source={{uri: item.imageURL}}
-                />
-                <View
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: 'rgba(0,0,0, 0.7)',
-                    padding: 20,
-                    borderRadius: 30,
-                  }}>
-                  <Text
-                    variant="titleLarge"
-                    style={{
-                      color: 'gold',
-                      marginBottom: 10,
-                      fontWeight: '500',
-                    }}>
-                    {item.gameName}
-                  </Text>
-                  <Text variant="bodyLarge" style={{color: 'white'}}>
-                    {item.description}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          }}
+          renderItem={({item, index}) => (
+            <GameCard
+              game={item}
+              onPress={() => navigation.navigate('Info', {id: index})}
+            />
+          )}
         />
       )}
     </View>

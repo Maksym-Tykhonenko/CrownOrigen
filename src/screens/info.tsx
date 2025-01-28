@@ -2,58 +2,72 @@ import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import React from 'react';
 import {
   Dimensions,
-  FlatList,
-  Image,
-  ImageSourcePropType,
-  Pressable,
   ScrollView,
-  StyleSheet,
   View,
+  Image,
+  Animated,
+  PanResponder,
+  Share,
+  Alert,
 } from 'react-native';
-
-import uuid from 'react-native-uuid';
-
 import {
   Appbar,
   Avatar,
   Button,
-  Icon,
-  List,
   Text,
   TextInput,
-  useTheme,
+  Icon,
+  Chip,
+  ProgressBar,
 } from 'react-native-paper';
-import {list} from './home';
-import MapView, {Marker} from 'react-native-maps';
+import MapView, {Marker, Circle} from 'react-native-maps';
 import {
-  Asset,
-  ImageLibraryOptions,
-  ImagePickerResponse,
   launchImageLibrary,
+  ImageLibraryOptions,
 } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import uuid from 'react-native-uuid';
+import {list} from './home';
 
 export const Info = () => {
   const focused = useIsFocused();
   const route = useRoute<any>();
   const navigation = useNavigation();
   const [text, setText] = React.useState('');
-  const [imageSource, setImageSource] = React.useState<
-    ImageSourcePropType | null | any
-  >(null);
-  const [point, setPoint] = React.useState(0);
+  const [imageSource, setImageSource] = React.useState<any>(null);
+  const [points, setPoints] = React.useState(0);
   const [listGames, setListGames] = React.useState<any>(list);
+  const [comments, setComments] = React.useState<any>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [visitCount, setVisitCount] = React.useState(0);
+  const [userRating, setUserRating] = React.useState(0);
+  const [showAchievement, setShowAchievement] = React.useState(false);
 
-  const [comment, setComment] = React.useState<any>([
-    {
-      id: 1,
-      imageUrl: listGames[route.params?.id]?.imageCommentURL,
-      userName: 'Andrey',
-      avatar:
-        'https://img.freepik.com/free-psd/3d-render-avatar-character_23-2150611765.jpg',
-      commentDescriptions: listGames[route.params?.id]?.playerComment,
-    },
-  ]);
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const translateY = React.useRef(new Animated.Value(0)).current;
+
+  // Interactive game stats
+  const [gameStats, setGameStats] = React.useState({
+    visits: 0,
+    totalTime: 0,
+    achievements: [],
+    lastVisit: null,
+  });
+
+  // Gesture handler for interactive map
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        // Add interactive map features
+        if (Math.abs(gestureState.dx) > 100) {
+          // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+      },
+    }),
+  ).current;
 
   const getListGames = async () => {
     const storedList = await AsyncStorage.getItem('gameList');
@@ -61,280 +75,218 @@ export const Info = () => {
     if (parsedList.length) {
       setListGames(parsedList);
     }
-  };
-
-  const onGetPoint = async () => {
-    setPoint(prev => prev + 5);
-    setTost(true);
-    await AsyncStorage.setItem('point', JSON.stringify(point + 5));
-  };
-
-  const getPoint = async () => {
-    const value = await AsyncStorage.getItem('point');
-    if (value !== null) {
-      setPoint(Number(value));
-    }
+    setComments((prev: any) => [
+      ...prev,
+      {
+        id: uuid.v4(),
+        imageUrl: '',
+        userName: 'Andrey',
+        avatar:
+          'https://img.freepik.com/free-psd/3d-render-avatar-character_23-2150611765.jpg',
+        commentDescriptions: 'sdsdfsdfds',
+      },
+    ]);
   };
 
   React.useEffect(() => {
-    getPoint();
     getListGames();
   }, [focused]);
 
-  const pickImage = () => {
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo',
-    };
-    launchImageLibrary(options, (response: ImagePickerResponse) => {
-      if (!response.didCancel && !response.errorCode) {
-        if (response.assets && response.assets.length > 0) {
-          const selectedAsset: Asset = response.assets[0];
-          setImageSource({uri: selectedAsset.uri});
-        }
+  const handleShare = async () => {
+    try {
+      const result = await Share.share({
+        message: `Check out ${
+          listGames[route.params?.id]?.gameName
+        } - An amazing gaming spot!`,
+        title: listGames[route.params?.id]?.gameName,
+      });
+      if (result.action === Share.sharedAction) {
+        await onGetPoints(3, 'Sharing is caring!');
       }
-    });
+    } catch (error) {
+      Alert.alert('Error sharing');
+    }
   };
 
-  const [tost, setTost] = React.useState(false);
+  const onGetPoints = async (amount: number, achievement: string) => {
+    setLoading(true);
+    try {
+      const newPoints = points + amount;
+      await AsyncStorage.setItem('points', JSON.stringify(newPoints));
+      setPoints(newPoints);
 
-  React.useEffect(() => {
-    if (tost) {
-      setComment((prev: any) => [
-        ...prev,
-        {
-          id: uuid.v4(),
-          imageUrl: imageSource.uri,
-          userName: 'Andrey',
-          avatar:
-            'https://img.freepik.com/free-psd/3d-render-avatar-character_23-2150611765.jpg',
-          commentDescriptions: text,
-        },
-      ]);
-      setText('');
-      setImageSource('');
-      setTimeout(() => {
-        setTost(false);
-      }, 3000);
+      // Show achievement animation
+      setShowAchievement(true);
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.delay(2000),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setShowAchievement(false));
+
+      // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      const newVisitCount = visitCount + 1;
+      setVisitCount(newVisitCount);
+
+      if (newVisitCount === 5) {
+        await onGetPoints(10, 'Regular Visitor Badge!');
+      }
+    } catch (error) {
+      Alert.alert('Error updating points');
+    } finally {
+      setLoading(false);
     }
-  }, [tost]);
+  };
+
+  const rateGame = async (rating: number) => {
+    setUserRating(rating);
+    if (rating >= 4) {
+      await onGetPoints(2, 'Thanks for rating!');
+    }
+  };
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
-      {tost && (
-        <View
-          style={{
-            backgroundColor: 'gold',
-            position: 'absolute',
-            top: '20%',
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            left: 0,
-            zIndex: 1,
-          }}>
-          <Text
-            variant="bodyMedium"
-            style={{color: 'white', fontWeight: '600'}}>
-            {!text && !imageSource
-              ? 'Successfully add point'
-              : 'Sent for processing'}
-          </Text>
-        </View>
-      )}
-      <Appbar.Header style={{backgroundColor: '#121212'}}>
+    <View style={{flex: 1, backgroundColor: '#121212'}}>
+      {/* Achievement Animation */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: '10%',
+          alignSelf: 'center',
+          zIndex: 100,
+          opacity: fadeAnim,
+          transform: [{translateY}],
+          backgroundColor: 'gold',
+          padding: 20,
+          borderRadius: 10,
+        }}>
+        <Text style={{color: '#000', fontWeight: 'bold'}}>
+          🎉 Achievement Unlocked!
+        </Text>
+      </Animated.View>
+
+      <Appbar.Header style={{backgroundColor: '#1E1E1E'}}>
         <Appbar.BackAction color="white" onPress={() => navigation.goBack()} />
-        <Appbar.Content color="white" title="" />
-        <View
-          style={{
-            backgroundColor: 'gold',
-            padding: 10,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 40,
-          }}>
-          <Text style={{color: 'black', fontWeight: '500'}}>{point}</Text>
-        </View>
-      </Appbar.Header>
-      <Image
-        width={Dimensions.get('window').width}
-        height={300}
-        source={{uri: listGames[route.params?.id]?.imageURL}}
-      />
-      <ScrollView
-        style={{backgroundColor: '#121212', marginTop: -40, borderRadius: 30}}>
-        <Text
-          variant="displaySmall"
-          style={{
-            color: 'white',
-            textAlign: 'center',
-            marginVertical: 10,
-            marginBottom: 20,
-          }}>
-          {listGames[route.params?.id]?.gameName}
-        </Text>
-        <Text
-          variant="bodyLarge"
-          style={{
-            color: 'gold',
-            marginHorizontal: 20,
-            fontWeight: '500',
-          }}>
-          Description
-        </Text>
-        <Text
-          variant="bodyMedium"
-          style={{
-            color: 'white',
-            marginVertical: 10,
-            marginHorizontal: 20,
-            marginBottom: 20,
-          }}>
-          {listGames[route.params?.id]?.description}
-        </Text>
-        <Text
-          variant="bodyLarge"
-          style={{
-            color: 'gold',
-            marginHorizontal: 20,
-            fontWeight: '500',
-          }}>
-          Category
-        </Text>
-        <Text
-          variant="bodyMedium"
-          style={{
-            color: 'white',
-            marginVertical: 10,
-            marginHorizontal: 20,
-            marginBottom: 20,
-          }}>
-          {listGames[route.params?.id]?.category}
-        </Text>
-        <Text
-          variant="bodyLarge"
-          style={{
-            color: 'gold',
-            marginHorizontal: 20,
-            fontWeight: '500',
-          }}>
-          Popularity
-        </Text>
-        <Text
-          variant="bodyMedium"
-          style={{
-            color: 'white',
-            marginVertical: 10,
-            marginHorizontal: 20,
-            marginBottom: 20,
-          }}>
-          {listGames[route.params?.id]?.popularity}
-        </Text>
-        <MapView
-          initialRegion={{
-            latitude: listGames[route.params?.id]?.coordinates.latitude,
-            longitude: listGames[route.params?.id]?.coordinates.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-          style={{width: '100%', height: 300}}>
-          <Marker coordinate={listGames[route.params?.id]?.coordinates} />
-        </MapView>
+        <Appbar.Content
+          color="white"
+          title={listGames[route.params?.id]?.gameName}
+        />
         <Button
-          style={{
-            borderRadius: 5,
-            padding: 5,
-            marginTop: 20,
-            backgroundColor: 'gold',
-          }}
-          mode="elevated"
-          onPress={onGetPoint}>
-          <Text variant="bodyLarge">Get points +5</Text>
+          mode="contained"
+          style={{backgroundColor: 'gold'}}
+          onPress={handleShare}>
+          Share
         </Button>
-        <View
-          style={{borderWidth: 1, borderTopColor: 'gold', marginVertical: 10}}>
-          <Text
-            variant="bodyLarge"
-            style={{
-              color: 'gold',
-              marginTop: 20,
-              paddingHorizontal: 20,
-              fontWeight: '500',
-            }}>
-            Comment
-          </Text>
-          {listGames[route.params?.id]?.playerComment?.length
-            ? comment.map((item: any) => (
+      </Appbar.Header>
+
+      <ScrollView>
+        <Image
+          width={Dimensions.get('window').width}
+          height={300}
+          source={{uri: listGames[route.params?.id]?.imageURL}}
+        />
+
+        {/* Game Stats */}
+        <View style={{padding: 20}}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <Chip icon="eye">{visitCount} visits</Chip>
+            <Chip icon="star" selected={userRating > 0}>
+              {userRating}/5
+            </Chip>
+            <Chip icon="trophy" selected={points > 0}>
+              {points} points
+            </Chip>
+          </View>
+
+          {/* Rating System */}
+          <View style={{marginVertical: 20}}>
+            <Text style={{color: 'white', marginBottom: 10}}>
+              Rate this location:
+            </Text>
+            <View style={{flexDirection: 'row'}}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <Icon
+                  key={star}
+                  source={star <= userRating ? 'star' : 'star-outline'}
+                  size={30}
+                  color={star <= userRating ? 'gold' : 'white'}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Interactive Map */}
+          <View {...panResponder.panHandlers}>
+            <MapView
+              style={{height: 300, borderRadius: 15}}
+              initialRegion={{
+                latitude: listGames[route.params?.id]?.coordinates.latitude,
+                longitude: listGames[route.params?.id]?.coordinates.longitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+              }}>
+              <Marker coordinate={listGames[route.params?.id]?.coordinates} />
+              <Circle
+                center={listGames[route.params?.id]?.coordinates}
+                radius={1000}
+                fillColor="rgba(255, 215, 0, 0.2)"
+                strokeColor="rgba(255, 215, 0, 0.5)"
+              />
+            </MapView>
+          </View>
+
+          {/* Comments Section with Enhanced UI */}
+          <View style={{marginTop: 20}}>
+            <Text style={{color: 'gold', fontSize: 20, marginBottom: 15}}>
+              Community Feedback
+            </Text>
+            {comments.map((comment: any) => (
+              <View
+                key={comment.id}
+                style={{
+                  backgroundColor: '#1E1E1E',
+                  padding: 15,
+                  borderRadius: 10,
+                  marginBottom: 15,
+                }}>
                 <View
-                  key={item.id}
                   style={{
-                    marginBottom: 20,
-                    marginHorizontal: 20,
-                    marginVertical: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 10,
                   }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      columnGap: 20,
-                      marginBottom: 10,
-                    }}>
-                    <Avatar.Image
-                      size={40}
-                      source={{
-                        uri: item.avatar,
-                      }}
-                      style={{
-                        backgroundColor: 'white',
-                        alignSelf: 'center',
-                      }}
-                    />
-                    <Text
-                      variant="bodyLarge"
-                      style={{
-                        fontWeight: '500',
-                        color: 'white',
-                      }}>
-                      {item.userName}
+                  <Avatar.Image size={40} source={{uri: comment.avatar}} />
+                  <View style={{marginLeft: 10}}>
+                    <Text style={{color: 'white'}}>{comment.userName}</Text>
+                    <Text style={{color: 'gray'}}>
+                      {new Date(comment.timestamp).toLocaleDateString()}
                     </Text>
                   </View>
-                  <Image
-                    style={{width: '100%', height: 200, marginBottom: 20}}
-                    source={{uri: item.imageUrl}}
-                  />
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: 'white',
-                      marginBottom: 20,
-                    }}>
-                    {item.commentDescriptions}
-                  </Text>
                 </View>
-              ))
-            : null}
-          <View style={{marginHorizontal: 20}}>
-            <View style={{alignItems: 'center', marginBottom: 10}}>
-              {!imageSource ? (
-                <Pressable onPress={pickImage}>
-                  <Icon size={50} color="white" source={'camera'} />
-                </Pressable>
-              ) : (
-                <Image style={{width: 50, height: 50}} source={imageSource} />
-              )}
-            </View>
-            <TextInput
-              label="Comment"
-              style={{backgroundColor: 'white', marginBottom: 20}}
-              value={text}
-              onChangeText={text => setText(text)}
-            />
-            {imageSource && text.length && text.indexOf(' ') ? (
-              <Button
-                style={{borderRadius: 5, padding: 5}}
-                mode="elevated"
-                onPress={() => setTost(true)}>
-                <Text variant="bodyLarge">Send</Text>
-              </Button>
-            ) : null}
+                {comment.imageUrl && (
+                  <Image
+                    source={{uri: comment.imageUrl}}
+                    style={{
+                      width: '100%',
+                      height: 200,
+                      borderRadius: 10,
+                      marginBottom: 10,
+                    }}
+                  />
+                )}
+                <Text style={{color: 'white'}}>
+                  {comment.commentDescriptions}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
       </ScrollView>

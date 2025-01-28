@@ -1,43 +1,84 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useState, useEffect, memo} from 'react';
+import {View, ScrollView, Pressable, ImageSourcePropType} from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import React from 'react';
-import {
-  FlatList,
-  Image,
-  ImageSourcePropType,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
-import {
-  Asset,
-  ImageLibraryOptions,
-  ImagePickerResponse,
-  launchImageLibrary,
-} from 'react-native-image-picker';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Asset, launchImageLibrary} from 'react-native-image-picker';
 import uuid from 'react-native-uuid';
-
 import {
   Appbar,
   Avatar,
   Button,
-  List,
   Text,
   TextInput,
-  useTheme,
+  Card,
+  IconButton,
+  ProgressBar,
 } from 'react-native-paper';
 import {list} from './home';
 
-export const CreateCard = () => {
-  const [gameName, setGameName] = React.useState('');
-  const [category, setCategory] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [popularity, setPopularity] = React.useState('');
+type FormData = {
+  gameName: string;
+  category: string;
+  description: string;
+};
 
-  const focused = useIsFocused();
+const InputField = memo(
+  ({
+    label,
+    value,
+    onChangeText,
+    icon,
+    multiline = false,
+  }: {
+    label: string;
+    value: string;
+    onChangeText: (text: string) => void;
+    icon?: React.ReactNode;
+    multiline?: boolean;
+  }) => (
+    <View style={{marginBottom: 16}}>
+      <View
+        style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
+        {icon}
+        <Text style={{color: 'white', marginLeft: 8}}>{label}</Text>
+      </View>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        style={{
+          backgroundColor: '#2A2A2A',
+          marginBottom: 4,
+          borderRadius: 8,
+        }}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        mode="flat"
+        textColor="white"
+      />
+    </View>
+  ),
+);
+
+export const CreateCard = () => {
   const navigation = useNavigation<any>();
-  const [point, setPoint] = React.useState(0);
+  const focused = useIsFocused();
+  const [point, setPoint] = useState(0);
+  const [showToast, setShowToast] = useState(false);
+  const [imageSource, setImageSource] = useState<any | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    gameName: '',
+    category: '',
+    description: '',
+  });
+  const [formProgress, setFormProgress] = useState(0);
+
+  useEffect(() => {
+    getPoint();
+  }, [focused]);
+
+  useEffect(() => {
+    calculateProgress();
+  }, [formData, imageSource]);
 
   const getPoint = async () => {
     const value = await AsyncStorage.getItem('point');
@@ -46,22 +87,37 @@ export const CreateCard = () => {
     }
   };
 
-  const [imageSource, setImageSource] = React.useState<
-    ImageSourcePropType | null | any
-  >(null);
+  const calculateProgress = () => {
+    const fields = [
+      formData.gameName,
+      formData.category,
+      formData.description,
+      imageSource,
+    ];
+    const filledFields = fields.filter(field => field).length;
+    setFormProgress(filledFields / fields.length);
+  };
 
   const pickImage = () => {
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo',
-    };
-    launchImageLibrary(options, (response: ImagePickerResponse) => {
-      if (!response.didCancel && !response.errorCode) {
-        if (response.assets && response.assets.length > 0) {
-          const selectedAsset: Asset = response.assets[0];
-          setImageSource({uri: selectedAsset.uri});
-        }
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      if (!response.didCancel && !response.errorCode && response.assets?.[0]) {
+        setImageSource({uri: response.assets[0].uri});
       }
     });
+  };
+
+  const handleInputChange = (field: keyof FormData) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value.trim(),
+    }));
+  };
+
+  const isFormValid = () => {
+    return (
+      Object.values(formData).every(value => value.trim().length > 0) &&
+      imageSource !== null
+    );
   };
 
   const submit = async () => {
@@ -69,30 +125,26 @@ export const CreateCard = () => {
       const storedList = await AsyncStorage.getItem('gameList');
       const parsedList = storedList ? JSON.parse(storedList) : [];
 
-      setGameName('');
-      setCategory('');
-      setDescription('');
-      setPopularity('');
       setImageSource(null);
       const newList = [
         ...(parsedList.length ? parsedList : list),
         {
           id: uuid.v4(),
-          gameName: gameName,
-          category: category,
-          description: description,
-          popularity: popularity,
+          gameName: formData.gameName,
+          category: formData.category,
+          description: formData.description,
+          popularity: 4.9,
           playerComment: '',
           coordinates: {
             latitude: 48.8588443,
             longitude: 2.2943506,
           },
           imageCommentURL: '',
-          imageURL: imageSource.uri,
+          imageURL: imageSource?.uri,
         },
       ];
       await AsyncStorage.setItem('gameList', JSON.stringify(newList));
-      setTost(true);
+      setShowToast(true);
 
       navigation.goBack();
     } catch (error) {
@@ -100,128 +152,127 @@ export const CreateCard = () => {
     }
   };
 
-  React.useEffect(() => {
-    getPoint();
-  }, [focused]);
-
-  const [tost, setTost] = React.useState(false);
-
-  React.useEffect(() => {
-    if (tost) {
-      setTimeout(() => {
-        setTost(false);
-      }, 3000);
-    }
-  }, [tost]);
-
   return (
     <View style={{backgroundColor: '#121212', flex: 1}}>
-      {tost && (
+      {showToast && (
         <View
           style={{
             backgroundColor: 'gold',
             position: 'absolute',
-            top: '20%',
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            left: 0,
+            top: '10%',
+            left: '50%',
+            transform: [{translateX: -75}],
+            padding: 16,
+            borderRadius: 8,
             zIndex: 1,
+            width: 150,
+            alignItems: 'center',
           }}>
-          <Text
-            variant="bodyMedium"
-            style={{color: 'white', fontWeight: '600'}}>
-            Successfully add card
-          </Text>
+          <Text style={{color: 'black', fontWeight: '600'}}>Card Created!</Text>
         </View>
       )}
-      <Appbar.Header style={{backgroundColor: '#121212'}}>
+
+      <Appbar.Header style={{backgroundColor: '#1E1E1E'}}>
         <Appbar.BackAction color="white" onPress={() => navigation.goBack()} />
-        <Appbar.Content color="white" title="" />
+        <Appbar.Content color="white" title="Create New Card" />
         <View
           style={{
             backgroundColor: 'gold',
             padding: 10,
+            borderRadius: 20,
+            minWidth: 40,
             alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 40,
           }}>
-          <Text style={{color: 'black', fontWeight: '500'}}>{point}</Text>
+          <Text style={{color: 'black', fontWeight: '600'}}>{point}</Text>
         </View>
       </Appbar.Header>
-      <Text
-        variant="displaySmall"
-        style={{color: 'white', textAlign: 'center', marginVertical: 10}}>
-        Create Card
-      </Text>
-      {!imageSource ? (
-        <Pressable onPress={pickImage}>
-          <Avatar.Icon
-            size={120}
-            icon={'camera'}
-            color="black"
-            style={{
-              backgroundColor: 'white',
-              alignSelf: 'center',
-              marginBottom: 20,
-            }}
-          />
-        </Pressable>
-      ) : (
-        <Pressable onPress={pickImage}>
-          <Avatar.Image
-            size={120}
-            source={imageSource}
-            style={{
-              backgroundColor: 'white',
-              alignSelf: 'center',
-              marginBottom: 20,
-            }}
-          />
-        </Pressable>
-      )}
-      <ScrollView style={{marginHorizontal: 20}}>
-        <TextInput
-          label="Game Name"
-          style={{backgroundColor: 'white', marginBottom: 20}}
-          value={gameName}
-          onChangeText={text => setGameName(text)}
-        />
-        <TextInput
-          label="Category"
-          style={{backgroundColor: 'white', marginBottom: 20}}
-          value={category}
-          onChangeText={text => setCategory(text)}
-        />
-        <TextInput
-          label="Description"
-          style={{backgroundColor: 'white', marginBottom: 20}}
-          value={description}
-          onChangeText={text => setDescription(text)}
-        />
-        <TextInput
-          label="Popularity"
-          style={{backgroundColor: 'white', marginBottom: 20}}
-          value={popularity}
-          onChangeText={text => setPopularity(text)}
-        />
-      </ScrollView>
 
-      {gameName.length &&
-      gameName.indexOf(' ') &&
-      description.length &&
-      description.indexOf(' ') &&
-      popularity.length &&
-      popularity.indexOf(' ') &&
-      category.length &&
-      category.indexOf(' ') &&
-      imageSource ? (
+      <ScrollView style={{padding: 16}}>
+        <Card
+          style={{
+            backgroundColor: '#1E1E1E',
+            padding: 16,
+            marginBottom: 16,
+            borderRadius: 12,
+          }}>
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 18,
+              fontWeight: 'bold',
+              marginBottom: 16,
+              textAlign: 'center',
+            }}>
+            Game Information
+          </Text>
+
+          <View style={{alignItems: 'center', marginBottom: 24}}>
+            <Pressable onPress={pickImage}>
+              {!imageSource ? (
+                <Avatar.Icon
+                  size={120}
+                  icon={'camera'}
+                  style={{
+                    backgroundColor: '#333',
+                  }}
+                />
+              ) : (
+                <Avatar.Image
+                  size={120}
+                  source={imageSource}
+                  style={{
+                    backgroundColor: '#333',
+                  }}
+                />
+              )}
+            </Pressable>
+            <Text style={{color: '#666', marginTop: 8}}>
+              Tap to {imageSource ? 'change' : 'add'} image
+            </Text>
+          </View>
+
+          <InputField
+            label="Game Name"
+            value={formData.gameName}
+            onChangeText={handleInputChange('gameName')}
+          />
+
+          <InputField
+            label="Category"
+            value={formData.category}
+            onChangeText={handleInputChange('category')}
+          />
+
+          <InputField
+            label="Description"
+            value={formData.description}
+            onChangeText={handleInputChange('description')}
+            multiline
+          />
+
+          <View style={{marginTop: 16}}>
+            <Text style={{color: '#666', marginBottom: 8}}>Form Progress</Text>
+            <ProgressBar
+              progress={formProgress}
+              color="gold"
+              style={{height: 8, borderRadius: 4}}
+            />
+          </View>
+        </Card>
+
         <Button
-          style={{borderRadius: 5, padding: 5, marginBottom: 20}}
-          mode="elevated"
-          onPress={submit}>
-          <Text variant="bodyLarge">Submit</Text>
+          mode="contained"
+          onPress={submit}
+          disabled={!isFormValid()}
+          style={{
+            marginBottom: 24,
+            backgroundColor: isFormValid() ? 'gold' : '#333',
+            borderRadius: 8,
+            padding: 8,
+          }}>
+          Create Card
         </Button>
-      ) : null}
+      </ScrollView>
     </View>
   );
 };
