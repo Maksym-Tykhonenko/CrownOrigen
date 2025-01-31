@@ -19,6 +19,9 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 export const TabNavigation = () => {
+  {
+    /** */
+  }
   return (
     <Tab.Navigator
       screenOptions={{
@@ -149,57 +152,20 @@ export const App = () => {
       setLouderIsEnded(true);
     }, 8000);
   }, []);
+  {
+    /**<Stack.Screen name="Info" component={Info} />
+          <Stack.Screen name="CreateCard" component={CreateCard} /> */
+  }
+  ///
   return (
     <NavigationContainer>
       <PaperProvider>
-        {!louderIsEnded ? (
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: '#000',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Animated.Text
-              style={{
-                textAlign: 'center',
-                color: 'gold',
-                fontSize: 60,
-                fontWeight: 'bold',
-                opacity: appearingSecondAnim,
-                shadowColor: 'gold',
-                shadowRadius: 10,
-                shadowOffset: {width: 0, height: 5},
-                shadowOpacity: 0.8,
-                elevation: 5,
-              }}>
-              Personal Crown Game Collection
-            </Animated.Text>
-            <Animated.Text
-              style={{
-                textAlign: 'center',
-                color: 'gold',
-                fontSize: 60,
-                fontWeight: 'bold',
-                opacity: appearingSecondAnim,
-                shadowColor: 'gold',
-                shadowRadius: 10,
-                shadowOffset: {width: 0, height: 5},
-                shadowOpacity: 0.8,
-                elevation: 5,
-              }}>
-              !!!
-            </Animated.Text>
-          </View>
-        ) : (
-          <Stack.Navigator screenOptions={{headerShown: false}}>
-            <Stack.Screen name="TabNavigation" component={TabNavigation} />
-            <Stack.Screen name="Info" component={Info} />
-            <Stack.Screen name="CreateCard" component={CreateCard} />
-            <Stack.Screen name="Statistics" component={Statistics} />
-            <Stack.Screen name="Support" component={Support} />
-          </Stack.Navigator>
-        )}
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+          <Stack.Screen name="TabNavigation" component={TabNavigation} />
+
+          <Stack.Screen name="Statistics" component={Statistics} />
+          <Stack.Screen name="Support" component={Support} />
+        </Stack.Navigator>
       </PaperProvider>
     </NavigationContainer>
   );
