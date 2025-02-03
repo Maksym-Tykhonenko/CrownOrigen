@@ -153,8 +153,7 @@ export const App = () => {
     }, 8000);
   }, []);
   {
-    /**<Stack.Screen name="Info" component={Info} />
-          <Stack.Screen name="CreateCard" component={CreateCard} /> */
+    /** */
   }
   ///
   return (
@@ -162,7 +161,8 @@ export const App = () => {
       <PaperProvider>
         <Stack.Navigator screenOptions={{headerShown: false}}>
           <Stack.Screen name="TabNavigation" component={TabNavigation} />
-
+          <Stack.Screen name="Info" component={Info} />
+          <Stack.Screen name="CreateCard" component={CreateCard} />
           <Stack.Screen name="Statistics" component={Statistics} />
           <Stack.Screen name="Support" component={Support} />
         </Stack.Navigator>
