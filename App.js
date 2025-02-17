@@ -394,19 +394,21 @@ export const App = () => {
         return;
       }
 
-      if (event.notification.launchURL) {
-        setPushOpenWebview(true);
-        fetch(
-          `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_open_browser&jthrhg=${timeStampUserId}`,
-        );
-        //console.log('Івент push_open_browser OneSignal');
-      } else {
-        setPushOpenWebview(true);
-        fetch(
-          `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_open_webview&jthrhg=${timeStampUserId}`,
-        );
-        //console.log('Івент push_open_webview OneSignal');
-      }
+      setTimeout(() => {
+        if (event.notification.launchURL) {
+          setPushOpenWebview(true);
+          fetch(
+            `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_open_browser&jthrhg=${timeStampUserId}`,
+          );
+          //console.log('Івент push_open_browser OneSignal');
+        } else {
+          setPushOpenWebview(true);
+          fetch(
+            `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_open_webview&jthrhg=${timeStampUserId}`,
+          );
+          //console.log('Івент push_open_webview OneSignal');
+        }
+      }, 2500);
 
       pushOpenWebViewOnce.current = true; // Блокування повторного виконання
       setTimeout(() => {
