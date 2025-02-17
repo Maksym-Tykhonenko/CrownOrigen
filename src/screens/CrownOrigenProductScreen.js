@@ -15,6 +15,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CrownOrigenProductScreen = ({navigation, route}) => {
   const [product, setProduct] = useState(route.params?.product);
+  const [timeStampUserId, setTimeStampUserId] = useState(
+    route.params?.timeStampUserId,
+  );
   ///////////
   {
     /**
@@ -55,12 +58,6 @@ const CrownOrigenProductScreen = ({navigation, route}) => {
   }
   const INITIAL_URL = `https://marvelous-royal-celebration.space/`;
   const URL_IDENTIFAIRE = `8ffFtJxX`;
-
-  /////////////Timestamp + user_id generation
-  const timestamp_user_id = `${new Date().getTime()}-${Math.floor(
-    1000000 + Math.random() * 9000000,
-  )}`;
-  //console.log('idForTag', timestamp_user_id);
 
   const refWebview = useRef(null);
 
@@ -106,7 +103,7 @@ const CrownOrigenProductScreen = ({navigation, route}) => {
       // Відправляємо івент лише, якщо його ще не відправляли
       if (!pushSubscribeStatus && route.params?.responseToPushPermition) {
         fetch(
-          `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_subscribe&jthrhg=${timestamp_user_id}`,
+          `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=push_subscribe&jthrhg=${timeStampUserId}`,
         );
         console.log('івент push_subscribe !!!');
         await AsyncStorage.setItem('pushSubscribeStatus', 'sent');
@@ -125,7 +122,7 @@ const CrownOrigenProductScreen = ({navigation, route}) => {
     if (!hasWebViewOpenEventSent.current) {
       hasWebViewOpenEventSent.current = true; // Встановлюємо, що івент вже відправлений
       fetch(
-        `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=webview_open&jthrhg=${timestamp_user_id}`,
+        `${INITIAL_URL}${URL_IDENTIFAIRE}?utretg=webview_open&jthrhg=${timeStampUserId}`,
       );
       //console.log('Івент webview_open відправлено!');
     }
