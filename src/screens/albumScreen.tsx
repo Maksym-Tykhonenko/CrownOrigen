@@ -8,6 +8,7 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  ImageBackground,
 } from 'react-native';
 import {
   Appbar,
@@ -114,8 +115,9 @@ export const AlbumScreen = () => {
   };
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
-      <Appbar.Header style={{backgroundColor: '#121212'}}>
+    <View style={{ backgroundColor: '#121212', flex: 1 }}>
+      <ImageBackground style={{flex:1}} source={require('../assets/Background.png')}>
+        <Appbar.Header style={{backgroundColor: '#121212'}}>
         <Appbar.Content color="white" title="" />
         <View style={{borderRadius: 0}}>
           <Image
@@ -214,6 +216,8 @@ export const AlbumScreen = () => {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+      </ImageBackground>
+      
     </View>
   );
 };

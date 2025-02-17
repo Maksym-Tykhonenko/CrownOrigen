@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
 import React from 'react';
-import {FlatList, Image, ScrollView, View} from 'react-native';
+import {FlatList, Image, ScrollView, View,ImageBackground} from 'react-native';
 
 import {Appbar, Avatar, Button, Text, TextInput} from 'react-native-paper';
 import {TopLeaderboard} from './topLeaderboard';
@@ -22,7 +22,8 @@ export const Top = () => {
   }, [focused]);
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
+    <View style={{ backgroundColor: '#121212', flex: 1 }}>
+      <ImageBackground style={{flex:1}} source={require('../assets/Background.png')}>
       <Appbar.Header style={{backgroundColor: '#121212'}}>
         {/* Ваш існуючий header код */}
       </Appbar.Header>
@@ -31,7 +32,7 @@ export const Top = () => {
         style={{color: 'white', textAlign: 'center', marginVertical: 20}}>
         Top User
       </Text>
-      <TopLeaderboard />
+      <TopLeaderboard /></ImageBackground>
     </View>
   );
 };

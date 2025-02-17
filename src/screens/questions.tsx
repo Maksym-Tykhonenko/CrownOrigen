@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {FlatList, Image, View, TouchableOpacity} from 'react-native';
+import {FlatList, Image, View, TouchableOpacity,ImageBackground} from 'react-native';
 import {Appbar, Button, Text, Card} from 'react-native-paper';
 
 interface QuizQuestion {
@@ -283,7 +283,8 @@ export const Questions = () => {
   };
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
+    <View style={{ backgroundColor: '#121212', flex: 1 }}>
+      <ImageBackground style={{flex:1}} source={require('../assets/Background.png')}>
       <Appbar.Header style={{backgroundColor: '#121212'}}>
         <Appbar.Content color="white" title="" />
         <View style={{borderRadius: 0}}>
@@ -311,7 +312,7 @@ export const Questions = () => {
         style={{color: 'white', textAlign: 'center', marginVertical: 20}}>
         Quiz
       </Text>
-      {!quizStarted ? renderCategorySelection() : renderQuiz()}
+      {!quizStarted ? renderCategorySelection() : renderQuiz()}</ImageBackground>
     </View>
   );
 };

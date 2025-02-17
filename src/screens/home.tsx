@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {FlatList, Image, Pressable, View} from 'react-native';
+import {FlatList, Image, Pressable, View,ImageBackground} from 'react-native';
 
 import {Appbar, Icon, List, Text, useTheme} from 'react-native-paper';
 import {GameCard} from './gameCard';
@@ -136,7 +136,8 @@ export const Home = () => {
   }, [focused]);
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
+    <View style={{ backgroundColor: '#121212', flex: 1 }}>
+      <ImageBackground style={{flex:1}} source={require('../assets/Background.png')}>
       <Pressable
         onPress={() => navigation.navigate('CreateCard')}
         style={{
@@ -226,7 +227,7 @@ export const Home = () => {
             />
           )}
         />
-      )}
+      )}</ImageBackground>
     </View>
   );
 };

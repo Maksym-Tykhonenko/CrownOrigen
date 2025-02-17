@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, ScrollView, Pressable, ImageSourcePropType} from 'react-native';
+import {View, ScrollView, Pressable, ImageSourcePropType,ImageBackground} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {Asset, launchImageLibrary} from 'react-native-image-picker';
@@ -115,7 +115,8 @@ export const Profile = () => {
   };
 
   return (
-    <View style={{backgroundColor: '#121212', flex: 1}}>
+    <View style={{ backgroundColor: '#121212', flex: 1 }}>
+       <ImageBackground style={{flex:1}} source={require('../assets/Background.png')}>
       {showToast && (
         <View
           style={{
@@ -266,7 +267,7 @@ export const Profile = () => {
         mode="contained"
         onPress={() => navigation.navigate('Support')}>
         Support
-      </Button>
+      </Button></ImageBackground>
     </View>
   );
 };
